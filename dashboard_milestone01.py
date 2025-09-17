@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -113,19 +114,19 @@ with col2:
 if selected_pollutants:
     pollutant = selected_pollutants[0]
 
-    # Statistical summary
+    
     st.subheader("📊 Statistical Summary")
     stats = df[pollutant].describe()[["mean","50%","max","min","std","count"]]
     st.write(stats.rename({"50%":"median"}))
 
-    # Histogram
+
     st.subheader("📦 Distribution (Histogram)")
     fig, ax = plt.subplots(figsize=(6,4))
     df[pollutant].plot(kind="hist", bins=20, color="green", alpha=0.7, ax=ax)
     ax.set_xlabel(f"{pollutant} (µg/m³)")
     st.pyplot(fig)
 
-    # Data Quality
+
     st.subheader("🛡️ Data Quality")
     completeness = 100 * df[pollutant].notna().mean()
     validity = 100 * (df[pollutant] >= 0).mean()
