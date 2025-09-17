@@ -1,0 +1,7 @@
+*.pkl
+*.h5
+*.csv
+*.png
+*.html
+__pycache__/
+data.csv/
