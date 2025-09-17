@@ -5,15 +5,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# ---------------------------
-# Page config
-# ---------------------------
+
 st.set_page_config(page_title="Air Quality Dashboard", layout="wide")
 st.title("🌍 Air Quality Explorer")
 
-# ---------------------------
-# Dataset paths
-# ---------------------------
+
 dataset_folder = "data.csv"  
 all_datasets = [
     "city_day.csv",
@@ -22,25 +18,21 @@ all_datasets = [
     "station_hour.csv"
 ]
 
-# Build full paths
+
 all_dataset_paths = [os.path.join(dataset_folder, f) for f in all_datasets]
 
-# Check which files exist
+
 available_datasets = [f for f in all_dataset_paths if os.path.exists(f)]
 
 if not available_datasets:
     st.error(f"No datasets found in '{dataset_folder}' folder!")
     st.stop()
 
-# ---------------------------
-# Sidebar: Dataset selection
-# ---------------------------
+
 dataset_choice = st.sidebar.selectbox("Dataset", available_datasets, index=0)
 st.sidebar.markdown(f"**Selected Dataset:** {os.path.basename(dataset_choice)}")
 
-# ---------------------------
-# Load dataset function
-# ---------------------------
+
 @st.cache_data
 def load_dataset(dataset):
     try:
@@ -64,9 +56,7 @@ if df.empty:
     st.warning("Dataset is empty or could not be loaded.")
     st.stop()
 
-# ---------------------------
-# Sidebar: Location selection
-# ---------------------------
+
 location_col = "City" if os.path.basename(dataset_choice).startswith("city") else "Station"
 locations = sorted(df[location_col].dropna().unique())
 
@@ -76,24 +66,18 @@ if not locations:
 
 selected_location = st.sidebar.selectbox("🌍 Location", locations)
 
-# ---------------------------
-# Sidebar: Time range selection
-# ---------------------------
+
 time_options = {"Last 24 Hours":24, "Last 7 Days":24*7, "Last 30 Days":24*30, "All":None}
 time_choice = st.sidebar.selectbox("⏳ Time Range", list(time_options.keys()))
 
-# ---------------------------
-# Sidebar: Pollutant selection
-# ---------------------------
+
 selected_pollutants = st.sidebar.multiselect(
     "☁️ Pollutants",
     pollutants,
     default=[pollutants[0]] if pollutants else []
 )
 
-# ---------------------------
-# Filter data
-# ---------------------------
+
 df = df[df[location_col] == selected_location].copy()
 df = df.set_index("Datetime").sort_index()
 
@@ -102,9 +86,7 @@ if time_choice != "All":
     cutoff = df.index.max() - pd.Timedelta(hours=hours)
     df = df[df.index >= cutoff]
 
-# ---------------------------
-# Dashboard: Time series and correlation
-# ---------------------------
+
 col1, col2 = st.columns([2,1])
 
 with col1:
@@ -127,10 +109,7 @@ with col2:
         st.pyplot(fig)
     else:
         st.info("Select 2+ pollutants for correlation heatmap")
-
-# ---------------------------
-# Dashboard: Statistics & histogram
-# ---------------------------
+        
 if selected_pollutants:
     pollutant = selected_pollutants[0]
 
