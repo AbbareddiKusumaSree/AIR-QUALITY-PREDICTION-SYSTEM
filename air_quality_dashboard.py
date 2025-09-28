@@ -173,3 +173,28 @@ if admin_mode:
     if uploaded_file:
         st.write("Preview:", pd.read_csv(uploaded_file, nrows=5))
     st.button("🔄 Retrain Models")
+# -------------------
+# Additional Features
+# -------------------
+st.subheader("📊 Additional Insights")
+
+# --- AQI Distribution ---
+if "AQI_Bucket" in df.columns:
+    st.write("### AQI Distribution")
+    fig, ax = plt.subplots(figsize=(6,4))
+    sns.countplot(data=df, x="AQI_Bucket", order=["Good","Moderate","Poor","Very Poor","Severe"], palette="viridis", ax=ax)
+    ax.set_ylabel("Count")
+    ax.set_xlabel("AQI Category")
+    st.pyplot(fig)
+
+# --- Summary Statistics ---
+st.write("### Summary Statistics")
+summary = df[["AQI"] + available_pollutants].describe().T[["mean","min","max"]]
+st.dataframe(summary)
+
+# --- Top Pollutant Contributor ---
+if "AQI" in df.columns:
+    latest_row = df.iloc[-1]
+    dominant_pollutant = latest_row[available_pollutants].idxmax()
+    st.info(f"🌫️ Dominant Pollutant Right Now: **{dominant_pollutant}**")
+
