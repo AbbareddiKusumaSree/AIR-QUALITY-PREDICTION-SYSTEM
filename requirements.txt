@@ -4,3 +4,12 @@ matplotlib
 seaborn
 numpy
 scikit-learn
+prophet
+tensorflow>=2.11
+joblib
+sqlalchemy
+python-dateutil
+pytz
+plotly
+fastparquet
+
