@@ -1,4 +1,4 @@
-# air_quality_dashboard.py
+#air_quality_dashboard.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -88,8 +88,11 @@ if len(date_range) == 2:
 time_range = st.sidebar.selectbox("⏳ Time Range", ["Last 24 Hours", "Last 7 Days", "Last 30 Days", "All"])
 forecast_horizon = st.sidebar.selectbox("🔮 Forecast Horizon", ["24 Hours", "3 Days", "7 Days"])
 
+# -------------------
+# Pollutant Selection
+# -------------------
 available_pollutants = [p for p in ALL_POLLUTANTS if p in df.columns]
-pollutant_choice = st.sidebar.selectbox("☁️ Pollutant", available_pollutants)
+pollutant_choices = st.sidebar.multiselect("☁️ Select Pollutants", available_pollutants, default=available_pollutants[:2])
 admin_mode = st.sidebar.toggle("⚙️ Admin Mode")
 
 if st.sidebar.button("🔄 Update Dashboard"):
@@ -132,19 +135,22 @@ with col1:
 
 # --- Forecast ---
 with col2:
-    st.subheader(f"{pollutant_choice} Forecast")
-    hist = df[pollutant_choice].dropna().tail(24)
-    forecast = hist + np.random.normal(0, 2, len(hist))  # dummy forecast
+    st.subheader("Pollutant Forecast")
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=hist.index, y=hist, mode="lines+markers", name="Historical", line=dict(color="blue")))
-    fig.add_trace(go.Scatter(x=hist.index, y=forecast, mode="lines+markers", name="Forecast", line=dict(color="orange", dash="dot")))
+    for pollutant in pollutant_choices:
+        hist = df[pollutant].dropna().tail(24)
+        forecast = hist + np.random.normal(0, 2, len(hist))  # dummy forecast
+        fig.add_trace(go.Scatter(x=hist.index, y=hist, mode="lines+markers",
+                                 name=f"{pollutant} - Historical"))
+        fig.add_trace(go.Scatter(x=hist.index, y=forecast, mode="lines+markers",
+                                 name=f"{pollutant} - Forecast", line=dict(dash="dot")))
     st.plotly_chart(fig, use_container_width=True)
 
 # --- Pollutant Trends ---
 with col3:
     st.subheader(f"Pollution Trends - {city_choice if 'city_choice' in locals() else ''}")
     fig, ax = plt.subplots(figsize=(8,4))
-    for p in available_pollutants[:5]:  # show first 5 pollutants for clarity
+    for p in pollutant_choices:
         df[p].dropna().resample("D").mean().plot(ax=ax, label=p)
     ax.legend()
     ax.set_ylabel("µg/m³ / ppm")
@@ -173,6 +179,7 @@ if admin_mode:
     if uploaded_file:
         st.write("Preview:", pd.read_csv(uploaded_file, nrows=5))
     st.button("🔄 Retrain Models")
+
 # -------------------
 # Additional Features
 # -------------------
@@ -189,12 +196,12 @@ if "AQI_Bucket" in df.columns:
 
 # --- Summary Statistics ---
 st.write("### Summary Statistics")
-summary = df[["AQI"] + available_pollutants].describe().T[["mean","min","max"]]
-st.dataframe(summary)
+if pollutant_choices:
+    summary = df[["AQI"] + pollutant_choices].describe().T[["mean","min","max"]]
+    st.dataframe(summary)
 
 # --- Top Pollutant Contributor ---
-if "AQI" in df.columns:
+if "AQI" in df.columns and pollutant_choices:
     latest_row = df.iloc[-1]
-    dominant_pollutant = latest_row[available_pollutants].idxmax()
+    dominant_pollutant = latest_row[pollutant_choices].idxmax()
     st.info(f"🌫️ Dominant Pollutant Right Now: **{dominant_pollutant}**")
-
