@@ -97,7 +97,15 @@ admin_mode = st.sidebar.toggle("⚙️ Admin Mode")
 
 if st.sidebar.button("🔄 Update Dashboard"):
     st.rerun()
-
+ #-------------------
+# Admin Panel
+# -------------------
+if admin_mode:
+    st.subheader("⚙️ Admin Panel")
+    uploaded_file = st.file_uploader("Upload new dataset", type=["csv"])
+    if uploaded_file:
+        st.write("Preview:", pd.read_csv(uploaded_file, nrows=5))
+    st.button("🔄 Retrain Models")
 # -------------------
 # Show Filtered Data
 # -------------------
@@ -109,7 +117,6 @@ st.dataframe(df.head())
 # -------------------
 col1, col2 = st.columns(2)
 col3, col4 = st.columns(2)
-
 # --- Gauge: Current AQI ---
 with col1:
     st.subheader("Current Air Quality")
@@ -170,15 +177,7 @@ with col4:
         st.error("❌ Hazardous air quality, avoid outdoor activity")
     st.info("📢 Model update completed (demo).")
 
-# -------------------
-# Admin Panel
-# -------------------
-if admin_mode:
-    st.subheader("⚙️ Admin Panel")
-    uploaded_file = st.file_uploader("Upload new dataset", type=["csv"])
-    if uploaded_file:
-        st.write("Preview:", pd.read_csv(uploaded_file, nrows=5))
-    st.button("🔄 Retrain Models")
+
 
 # -------------------
 # Additional Features
