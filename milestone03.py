@@ -1,9 +1,7 @@
-# milestone2.py
-# Train & Evaluate Models (ARIMA, Prophet, LSTM)
-# Import Libraries
-
+import os
 import pandas as pd
 import numpy as np
+import streamlit as st
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.arima.model import ARIMA
 from prophet import Prophet
@@ -13,13 +11,44 @@ from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 import joblib
 
 # -----------------------------
-# Load Preprocessed Dataset
+# Load Dataset
 # -----------------------------
-df = pd.read_csv("cleaned_air_quality.csv", parse_dates=["Datetime"])
-df.set_index("Datetime", inplace=True)
+dataset_folder = "data.csv"  # Correct folder name
+all_datasets = ["cleaned_air_quality.csv"]
 
-pollutants = ["PM2.5", "PM10", "NO2", "SO2", "O3"]
-results = []
+# Build dataset paths
+all_dataset_paths = [os.path.join(dataset_folder, f) for f in all_datasets]
+available_datasets = [f for f in all_dataset_paths if os.path.exists(f)]
+
+if not available_datasets:
+    st.error(f"No datasets found in '{dataset_folder}' folder!")
+    st.stop()
+
+dataset_choice = st.sidebar.selectbox("Dataset", available_datasets, index=0)
+st.sidebar.markdown(f"**Selected Dataset:** {os.path.basename(dataset_choice)}")
+
+@st.cache_data
+def load_dataset(dataset):
+    try:
+        df = pd.read_csv(dataset, parse_dates=["Datetime"])
+    except Exception as e:
+        st.error(f"Error loading {dataset}: {e}")
+        return pd.DataFrame(), []
+
+    pollutants = ['PM2.5','PM10','NO','NO2','NOx','NH3','CO',
+                  'SO2','O3','Benzene','Toluene','Xylene','AQI']
+    for p in pollutants:
+        if p in df.columns:
+            df[p] = pd.to_numeric(df[p], errors="coerce")
+
+    available_pollutants = [p for p in pollutants if p in df.columns]
+    return df.set_index("Datetime").sort_index(), available_pollutants
+
+df, pollutants = load_dataset(dataset_choice)
+
+if df.empty:
+    st.warning("Dataset is empty or could not be loaded.")
+    st.stop()
 
 # -----------------------------
 # Define Model Functions
@@ -64,16 +93,18 @@ def train_lstm(series):
 # -----------------------------
 # Train & Evaluate Models
 # -----------------------------
+results = []  # ✅ FIX: define before using
+
 for pollutant in pollutants:
-    print(f"\nTraining models for {pollutant}...")
+    st.write(f"### Training models for {pollutant}...")
 
     if pollutant not in df.columns:
-        print(f"Skipping {pollutant}: not found in dataset.")
+        st.warning(f"Skipping {pollutant}: not found in dataset.")
         continue
 
     series = df[pollutant].dropna()
     if len(series) < 50:
-        print(f"Skipping {pollutant}: insufficient data.")
+        st.warning(f"Skipping {pollutant}: insufficient data.")
         continue
 
     train_size = int(len(series) * 0.8)
@@ -108,7 +139,7 @@ for pollutant in pollutants:
         [(arima_rmse, "ARIMA"), (prophet_rmse, "Prophet"), (lstm_rmse, "LSTM")],
         key=lambda x: x[0]
     )
-    print(f"Best model for {pollutant}: {best[1]} (RMSE={best[0]:.2f})")
+    st.success(f"Best model for {pollutant}: {best[1]} (RMSE={best[0]:.2f})")
 
     if best[1] == "ARIMA":
         joblib.dump(arima_model, f"{pollutant}_best_model.pkl")
@@ -121,8 +152,8 @@ for pollutant in pollutants:
 # Save Evaluation Results
 # -----------------------------
 results_df = pd.DataFrame(results)
-print("\nModel Comparison Results:")
-print(results_df)
+st.write("## Model Comparison Results")
+st.dataframe(results_df)
 
 results_df.to_csv("model_evaluation_results.csv", index=False)
-print("Results saved to model_evaluation_results.csv")
+st.success("✅ Results saved to model_evaluation_results.csv")
