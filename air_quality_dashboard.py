@@ -72,6 +72,9 @@ elif data_source == "MySQL":
             data.append(row)
     df = pd.DataFrame(data).set_index("Datetime")
 
+
+
+
 # -------------------
 # Filters: City + Date Range
 # -------------------
@@ -117,6 +120,8 @@ st.dataframe(df.head())
 # -------------------
 col1, col2 = st.columns(2)
 col3, col4 = st.columns(2)
+
+
 # --- Gauge: Current AQI ---
 with col1:
     st.subheader("Current Air Quality")

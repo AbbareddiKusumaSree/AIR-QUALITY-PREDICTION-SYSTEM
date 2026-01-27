@@ -1,7 +1,7 @@
-*.pkl
+
 *.h5
 
-*.png
+
 *.html
 __pycache__/
 
